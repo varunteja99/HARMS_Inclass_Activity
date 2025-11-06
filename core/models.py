@@ -106,6 +106,8 @@ class Patient(User):
         db_table = 'patients'
         verbose_name = 'Patient'
         verbose_name_plural = 'Patients'
+
+
 class Doctor(User):
     """Doctor class inheriting from User"""
     doctor_id = models.CharField(max_length=100, unique=True, primary_key=True)
@@ -384,6 +386,104 @@ class Appointment(models.Model):
             'status': self.status,
             'reason_for_visit': self.reason_for_visit
         }
+    
+class Notification(models.Model):
+    """Notification class"""
+    notification_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    user_id = models.CharField(max_length=100)
+    type = models.CharField(
+        max_length=50,
+        choices=[(tag.value, tag.name) for tag in NotificationType]
+    )
+    message = models.TextField()
+    sent_date = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+    priority = models.CharField(
+        max_length=20,
+        choices=[(tag.value, tag.name) for tag in Priority],
+        default=Priority.MEDIUM.value
+    )
+
+    def send(self) -> bool:
+        """Send notification"""
+        return True
+
+    def mark_as_read(self) -> None:
+        """Mark notification as read"""
+        self.is_read = True
+        self.save()
+
+    @staticmethod
+    def get_notifications(user_id: str) -> List['Notification']:
+        """Get notifications for a user"""
+        return list(Notification.objects.filter(user_id=user_id))
+
+    class Meta:
+        db_table = 'notifications'
+        verbose_name = 'Notification'
+        verbose_name_plural = 'Notifications'
+
+
+class Analytics(models.Model):
+    """Analytics class"""
+    analytics_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    metric_type = models.CharField(max_length=100)
+    value = models.TextField()
+    period = models.JSONField(default=dict)  # DateRange as JSON
+
+    def calculate_metrics(self) -> dict:
+        """Calculate metrics"""
+        return {
+            'metric_type': self.metric_type,
+            'value': self.value,
+            'period': self.period
+        }
+
+    def visualize(self):
+        """Visualize analytics"""
+        # Implementation would return a chart
+        pass
+
+    class Meta:
+        db_table = 'analytics'
+        verbose_name = 'Analytics'
+        verbose_name_plural = 'Analytics'
+
+
+class Report(models.Model):
+    """Report class"""
+    report_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    report_type = models.CharField(
+        max_length=50,
+        choices=[(tag.value, tag.name) for tag in ReportType]
+    )
+    generated_date = models.DateTimeField(auto_now_add=True)
+    data = models.TextField()
+    generated_by = models.CharField(max_length=100)
+
+    def generate(self) -> bool:
+        """Generate report"""
+        return True
+
+    def export(self):
+        """Export report"""
+        # Implementation would return a file
+        pass
+
+    def view(self):
+        """View report"""
+        return {
+            'report_id': self.report_id,
+            'report_type': self.report_type,
+            'generated_date': self.generated_date,
+            'data': self.data
+        }
+
+    class Meta:
+        db_table = 'reports'
+        verbose_name = 'Report'
+        verbose_name_plural = 'Reports'
+ 
 
     class Meta:
         db_table = 'appointments'

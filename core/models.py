@@ -106,7 +106,7 @@ class Patient(User):
         db_table = 'patients'
         verbose_name = 'Patient'
         verbose_name_plural = 'Patients'
-        class Doctor(User):
+class Doctor(User):
     """Doctor class inheriting from User"""
     doctor_id = models.CharField(max_length=100, unique=True, primary_key=True)
     full_name = models.CharField(max_length=200)
@@ -223,3 +223,169 @@ class TestResult(models.Model):
         verbose_name = 'Test Result'
         verbose_name_plural = 'Test Results'
  
+
+class TimeSlot(models.Model):
+    """TimeSlot class"""
+    slot_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    is_available = models.BooleanField(default=True)
+
+    def check_availability(self) -> bool:
+        """Check availability"""
+        return self.is_available
+
+    def reserve(self) -> bool:
+        """Reserve time slot"""
+        if self.is_available:
+            self.is_available = False
+            self.save()
+            return True
+        return False
+
+    def release(self) -> bool:
+        """Release time slot"""
+        self.is_available = True
+        self.save()
+        return True
+
+    class Meta:
+        db_table = 'time_slots'
+        verbose_name = 'Time Slot'
+        verbose_name_plural = 'Time Slots'
+
+
+class MedicalRecord(models.Model):
+    """MedicalRecord class"""
+    record_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    patient_id = models.CharField(max_length=100)
+    doctor_id = models.CharField(max_length=100)
+    visit_date = models.DateField(default=date.today)
+    diagnosis = models.TextField()
+    treatment_plan = models.TextField()
+    medications = models.ManyToManyField(Medication, related_name='medical_records')
+    test_results = models.ManyToManyField(TestResult, related_name='medical_records')
+    visit_type = models.CharField(max_length=100)
+
+    def create(self) -> bool:
+        """Create medical record"""
+        return True
+
+    def update(self) -> bool:
+        """Update medical record"""
+        return True
+
+    def view(self):
+        """View medical record"""
+        return {
+            'record_id': self.record_id,
+            'patient_id': self.patient_id,
+            'doctor_id': self.doctor_id,
+            'visit_date': self.visit_date,
+            'diagnosis': self.diagnosis,
+            'treatment_plan': self.treatment_plan
+        }
+
+    def download(self):
+        """Download medical record"""
+        # Implementation would return a file
+        pass
+
+    def add_test_result(self) -> bool:
+        """Add test result"""
+        return True
+
+    class Meta:
+        db_table = 'medical_records'
+        verbose_name = 'Medical Record'
+        verbose_name_plural = 'Medical Records'
+
+
+class Schedule(models.Model):
+    """Schedule class"""
+    schedule_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    doctor_id = models.CharField(max_length=100)
+    working_days = models.JSONField(default=list)  # List of day names
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    available_slots = models.ManyToManyField(TimeSlot, related_name='schedules', blank=True)
+    blocked_slots = models.ManyToManyField(TimeSlot, related_name='blocked_schedules', blank=True)
+
+    def set_availability(self) -> bool:
+        """Set availability"""
+        return True
+
+    def block_time_slot(self) -> bool:
+        """Block time slot"""
+        return True
+
+    def get_available_slots(self) -> List[TimeSlot]:
+        """Get available slots"""
+        return list(self.available_slots.filter(is_available=True))
+
+    def update_schedule(self) -> bool:
+        """Update schedule"""
+        return True
+
+    class Meta:
+        db_table = 'schedules'
+        verbose_name = 'Schedule'
+        verbose_name_plural = 'Schedules'
+
+
+class Appointment(models.Model):
+    """Appointment class"""
+    appointment_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    patient_id = models.CharField(max_length=100)
+    doctor_id = models.CharField(max_length=100)
+    appointment_date = models.DateTimeField()
+    time_slot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE, related_name='appointments')
+    specialty = models.CharField(max_length=100)
+    reason_for_visit = models.TextField()
+    status = models.CharField(
+        max_length=20,
+        choices=[(tag.value, tag.name) for tag in AppointmentStatus],
+        default=AppointmentStatus.PENDING.value
+    )
+    notes = models.TextField(blank=True, null=True)
+
+    def create(self) -> bool:
+        """Create appointment"""
+        return True
+
+    def reschedule(self) -> bool:
+        """Reschedule appointment"""
+        return True
+
+    def cancel(self) -> bool:
+        """Cancel appointment"""
+        self.status = AppointmentStatus.CANCELLED.value
+        self.save()
+        return True
+
+    def confirm(self) -> bool:
+        """Confirm appointment"""
+        self.status = AppointmentStatus.CONFIRMED.value
+        self.save()
+        return True
+
+    def mark_completed(self) -> None:
+        """Mark appointment as completed"""
+        self.status = AppointmentStatus.COMPLETED.value
+        self.save()
+
+    def get_details(self):
+        """Get appointment details"""
+        return {
+            'appointment_id': self.appointment_id,
+            'patient_id': self.patient_id,
+            'doctor_id': self.doctor_id,
+            'appointment_date': self.appointment_date,
+            'status': self.status,
+            'reason_for_visit': self.reason_for_visit
+        }
+
+    class Meta:
+        db_table = 'appointments'
+        verbose_name = 'Appointment'
+        verbose_name_plural = 'Appointments'

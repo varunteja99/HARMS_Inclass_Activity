@@ -23,9 +23,8 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser):
     """Base User class"""
-    user_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    user_id = models.CharField(max_length=100, unique=True)  # Remove primary_key=True
     email = models.EmailField(unique=True, validators=[EmailValidator()])
-    password = models.CharField(max_length=128)  # Will be hashed by Django
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     user_type = models.CharField(
@@ -69,7 +68,8 @@ class User(AbstractBaseUser):
 
 class Patient(User):
     """Patient class inheriting from User"""
-    patient_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    # Remove primary_key=True from patient_id
+    patient_id = models.CharField(max_length=100, unique=True)  # Remove primary_key=True
     full_name = models.CharField(max_length=200)
     insurance_info = models.TextField(blank=True, null=True)
     emergency_contact = models.CharField(max_length=200, blank=True, null=True)
@@ -110,7 +110,7 @@ class Patient(User):
 
 class Doctor(User):
     """Doctor class inheriting from User"""
-    doctor_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    doctor_id = models.CharField(max_length=100, unique=True)  # Remove primary_key=True
     full_name = models.CharField(max_length=200)
     specialty = models.CharField(max_length=100)
     license_number = models.CharField(max_length=100, unique=True)
@@ -144,7 +144,7 @@ class Doctor(User):
 
 class SystemAdmin(User):
     """SystemAdmin class inheriting from User"""
-    admin_id = models.CharField(max_length=100, unique=True, primary_key=True)
+    admin_id = models.CharField(max_length=100, unique=True)  # Remove primary_key=True
     full_name = models.CharField(max_length=200)
     access_level = models.CharField(max_length=50)
 
@@ -483,9 +483,4 @@ class Report(models.Model):
         db_table = 'reports'
         verbose_name = 'Report'
         verbose_name_plural = 'Reports'
- 
 
-    class Meta:
-        db_table = 'appointments'
-        verbose_name = 'Appointment'
-        verbose_name_plural = 'Appointments'
